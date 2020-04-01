@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import me.xdark.skinrestorer.SkinManager;
 import me.xdark.skinrestorer.SkinRestorer;
+import me.xdark.skinrestorer.SkinRestorerGameProfile;
 import me.xdark.skinrestorer.cache.ProfileCache;
 import me.xdark.skinrestorer.util.UtilFuture;
 import org.bukkit.NamespacedKey;
@@ -44,13 +45,13 @@ public final class PlayerContainerListener implements Listener {
 				val fill = this.profileCache.fillProfileTextures(new GameProfile(uuid, p.getName()), true, this.ioService);
 				UtilFuture.failed(fill, t -> this.logger.log(Level.WARNING, "Error fetching a skin for offline mode player", t));
 				UtilFuture.success(fill, result -> {
-					System.out.println("Setting profile!");
 					val set = CompletableFuture.runAsync(() -> this.skinRestorer.setProfile(uuid, result), this.syncService);
 					UtilFuture.failed(set, t -> this.logger.log(Level.WARNING, "Error fetching a skin for offline mode player", t));
 				});
 			}
 		} else {
-			skinManager.setGameProfile(p, skinManager.readGameProfileFromDataContainer(container, key));
+			val original = skinManager.getGameProfile(p);
+			skinManager.setGameProfile(p, new SkinRestorerGameProfile(original, skinManager.readGameProfileFromDataContainer(container, key)));
 		}
 	}
 
