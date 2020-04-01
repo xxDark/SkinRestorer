@@ -1,0 +1,8 @@
+name: SkinRestorer
+version: 1.0
+api-version: 1.14
+main: me.xdark.skinrestorer.BukkitPlugin
+authors:
+  - xDark
+commands:
+  skin:

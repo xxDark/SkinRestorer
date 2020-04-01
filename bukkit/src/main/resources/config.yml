@@ -1,0 +1,14 @@
+# Are we using BungeeCord or not
+bungee: false
+# Amount of io threads
+io-threads: 2
+# Skin provider
+provider:
+  type: 'authlib'
+# Cache settings
+cache:
+  enabled: true
+  concurrencyLevel: 2
+  maximumSize: 1000
+  dump: true
+  dump_path: cache.bin

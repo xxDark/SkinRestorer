@@ -1,0 +1,5 @@
+command.arguments-lack=Недостаточно аргументов
+profile.reset.success=Скин сброшен
+profile.reset.failed=Не удалось сбросить скин
+profile.set.success=Скин изменен
+profile.set.failed=Не удалось изменить скин {0}

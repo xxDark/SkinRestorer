@@ -1,0 +1,4 @@
+rootProject.name = 'skinrestorer'
+include 'api'
+include 'bukkit'
+

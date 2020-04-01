@@ -1,0 +1,45 @@
+subprojects {
+    apply plugin: 'java'
+
+    group 'me.xdark'
+    version '1.0-SNAPSHOT'
+
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+    tasks.withType(JavaCompile) {
+        options.encoding = 'UTF-8'
+    }
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven { url 'https://libraries.minecraft.net/' }
+    }
+
+    configurations {
+        shade
+        compile.extendsFrom shade
+    }
+
+    dependencies {
+        // lombok
+        def lombok = 'org.projectlombok:lombok:1.18.12'
+        compileOnly lombok
+        annotationProcessor lombok
+
+        // authlib
+        compileOnly 'com.mojang:authlib:1.5.25'
+
+        // Intellij IDEA's annotations
+        compileOnly 'org.jetbrains:annotations:16.0.2'
+
+        // Netty buffers
+        compileOnly 'io.netty:netty-buffer:4.1.48.Final'
+    }
+
+    jar {
+        from {
+            configurations.shade.collect { zipTree(it) }
+        }
+    }
+}
