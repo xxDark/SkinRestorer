@@ -33,7 +33,7 @@ final class BukkitSkinRestorer implements SkinRestorer {
 		}
 		GameProfile profile = this.skinManager.getGameProfile(p);
 		if (profile instanceof SpoofedGameProfile) {
-			return CompletableFuture.completedFuture(((SpoofedGameProfile) profile).getOriginal());
+			return CompletableFuture.completedFuture(((SpoofedGameProfile) profile).getSpoofed());
 		}
 		return CompletableFuture.completedFuture(null);
 	}
