@@ -48,6 +48,7 @@ public final class BukkitPlugin extends JavaPlugin {
 	private ExecutorService ioService;
 	private SkinManager skinManager;
 	private ProfileCache profileCache;
+	private MessagingService messagingService;
 	private Path dumpPath;
 
 	@Override
@@ -124,7 +125,7 @@ public final class BukkitPlugin extends JavaPlugin {
 			}
 		}
 		this.profileCache = cache;
-		MessagingService messagingService = bungee ? new BukkitMessagingService(server, this) : new InactiveMessagingService();
+		MessagingService messagingService = this.messagingService = bungee ? new BukkitMessagingService(server, this) : new InactiveMessagingService();
 		val skinRestorer = this.skinRestorer = new BukkitSkinRestorer(messagingService, skinManager, server);
 		server.getServicesManager().register(SkinRestorer.class, skinRestorer, this, ServicePriority.Normal);
 		val syncService = SchedulerExecutorService.create(false, this);
@@ -189,13 +190,18 @@ public final class BukkitPlugin extends JavaPlugin {
 		}
 		val skinManager = this.skinManager;
 		val key = newProfileKey();
+		val messagingService = this.messagingService;
+		messagingService.invalidateResponseCache();
+		val inactive = !messagingService.isActive();
 		for (val p : server.getOnlinePlayers()) {
 			val profile = skinManager.getGameProfile(p);
 			if (profile instanceof SpoofedGameProfile) {
 				// We must change profiles back in order to prevent class leaking
 				// Please, never use /reload
 				val spoofed = (SpoofedGameProfile) profile;
-				skinManager.writeGameProfileToDataContainer(p.getPersistentDataContainer(), key, spoofed.getSpoofed());
+				if (inactive) {
+					skinManager.writeGameProfileToDataContainer(p.getPersistentDataContainer(), key, spoofed.getSpoofed());
+				}
 				skinManager.setGameProfile(p, spoofed.getOriginal());
 			}
 		}
