@@ -23,6 +23,10 @@ public final class SkinManager {
 	@NotNull
 	private final Plugin plugin;
 
+	public GameProfile newSkinRestorerProfile(GameProfile original, GameProfile spoofed) {
+		return new SkinRestorerGameProfile(original, spoofed);
+	}
+
 	@SneakyThrows
 	public GameProfile getGameProfile(@NotNull Player player) {
 		return ServerInternals.getProfile(ServerInternals.getHandlePlayer(player));

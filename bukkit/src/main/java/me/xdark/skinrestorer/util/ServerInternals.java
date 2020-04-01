@@ -9,8 +9,6 @@ import org.bukkit.entity.Player;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.util.Map;
-import java.util.UUID;
 
 @UtilityClass
 public class ServerInternals {
@@ -18,8 +16,8 @@ public class ServerInternals {
 	private final MethodHandle GAME_PROFILE_GET;
 	private final MethodHandle GAME_PROFILE_SET;
 	private final MethodHandle REFRESH_PLAYER;
-	private final Map<UUID, GameProfile> USER_CACHE_UUID_MAP;
-	private final Map<UUID, GameProfile> USER_CACHE_NAME_MAP;
+	//private final Map<UUID, GameProfile> USER_CACHE_UUID_MAP;
+	//private final Map<UUID, GameProfile> USER_CACHE_NAME_MAP;
 
 	public Object getHandlePlayer(Player p) throws Throwable {
 		return GET_HANDLE.invoke(p);
@@ -51,13 +49,13 @@ public class ServerInternals {
 			val nmsPackage = "net.minecraft.server." + nmsVersion + '.';
 			val craftPlayerClass = Class.forName(craftBukkitPackage + "entity.CraftPlayer", true, cl);
 			val entityPlayerClass = Class.forName(nmsPackage + "EntityPlayer", true, cl);
-			val minecraftServerClass = Class.forName(nmsPackage + "MinecraftServer", true, cl);
-			val userCacheClass = Class.forName(nmsPackage + "UserCache", true, cl);
+			//val minecraftServerClass = Class.forName(nmsPackage + "MinecraftServer", true, cl);
+			//val userCacheClass = Class.forName(nmsPackage + "UserCache", true, cl);
 			GET_HANDLE = lookup.findVirtual(craftPlayerClass, "getHandle", MethodType.methodType(entityPlayerClass));
 			GAME_PROFILE_GET = lookup.findVirtual(entityPlayerClass, "getProfile", MethodType.methodType(GameProfile.class));
 			GAME_PROFILE_SET = lookup.findVirtual(entityPlayerClass, "setProfile", MethodType.methodType(Void.TYPE, GameProfile.class));
 			REFRESH_PLAYER = lookup.findVirtual(craftPlayerClass, "refreshPlayer", MethodType.methodType(Void.TYPE));
-			val server = lookup.findGetter(craftServerClass, "console", minecraftServerClass).invoke(craftServer);
+			/*val server = lookup.findGetter(craftServerClass, "console", minecraftServerClass).invoke(craftServer);
 			Object userCache = null;
 			for (val f : server.getClass().getDeclaredFields()) {
 				if (userCacheClass == f.getType()) {
@@ -71,7 +69,7 @@ public class ServerInternals {
 			}
 			// TODO enable user cache lookups
 			USER_CACHE_NAME_MAP = null;
-			USER_CACHE_UUID_MAP = null;
+			USER_CACHE_UUID_MAP = null;*/
 		} catch (Throwable t) {
 			throw new ExceptionInInitializerError(t);
 		}

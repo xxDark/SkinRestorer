@@ -18,11 +18,13 @@ import me.xdark.skinrestorer.listeners.QueueDrainListener;
 import me.xdark.skinrestorer.messaging.BukkitMessagingService;
 import me.xdark.skinrestorer.messaging.InactiveMessagingService;
 import me.xdark.skinrestorer.messaging.MessagingService;
+import me.xdark.skinrestorer.net.packets.BatchPlayerProfilePacket;
 import me.xdark.skinrestorer.providers.GameProfileProvider;
 import me.xdark.skinrestorer.providers.JsonFileProvider;
 import me.xdark.skinrestorer.providers.YggdrasilGameProfileProvider;
 import me.xdark.skinrestorer.schedule.SchedulerExecutorService;
 import org.bukkit.NamespacedKey;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -34,6 +36,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Collections;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -121,17 +124,52 @@ public final class BukkitPlugin extends JavaPlugin {
 			}
 		}
 		this.profileCache = cache;
-		MessagingService messaging = bungee ? new BukkitMessagingService(server, this) : new InactiveMessagingService();
-		val skinRestorer = this.skinRestorer = new BukkitSkinRestorer(messaging, skinManager, server);
+		MessagingService messagingService = bungee ? new BukkitMessagingService(server, this) : new InactiveMessagingService();
+		val skinRestorer = this.skinRestorer = new BukkitSkinRestorer(messagingService, skinManager, server);
 		server.getServicesManager().register(SkinRestorer.class, skinRestorer, this, ServicePriority.Normal);
 		val syncService = SchedulerExecutorService.create(false, this);
-		if (messaging.isActive()) {
-			pluginManager.registerEvents(new QueueDrainListener((BukkitMessagingService) messaging), this);
-			pluginManager.registerEvents(new PlayerProfileRequestListener(messaging, skinManager), this);
+		val key = newProfileKey();
+		val active = messagingService.isActive();
+		if (active) {
+			pluginManager.registerEvents(new QueueDrainListener((BukkitMessagingService) messagingService), this);
+			pluginManager.registerEvents(new PlayerProfileRequestListener(messagingService, skinManager), this);
 		} else {
-			pluginManager.registerEvents(new PlayerContainerListener(server, getLogger(), ioService, syncService, skinRestorer, newProfileKey(), cache, skinManager), this);
+			pluginManager.registerEvents(new PlayerContainerListener(server, getLogger(), ioService, syncService, skinRestorer, key, cache, skinManager), this);
 		}
 		getCommand("skin").setExecutor(new CommandSkin(skinRestorer, ioService, syncService, i18n, cache));
+		// Restore skins on the fly if /reload was used
+		val players = server.getOnlinePlayers();
+		if (!players.isEmpty()) {
+			if (!active) {
+				for (val p : players) {
+					val container = p.getPersistentDataContainer();
+					if (!skinManager.hasGameProfileEntry(container, key)) continue;
+					try {
+						skinManager.setGameProfile(p, skinManager.newSkinRestorerProfile(skinManager.getGameProfile(p), skinManager.readGameProfileFromDataContainer(container, key)));
+					} catch (Exception ex) {
+						getLogger().log(Level.WARNING, "Error recovering game profile for " + p.getUniqueId() + '/' + p.getName(), ex);
+					}
+				}
+			} else {
+				val uuids = players.stream().map(Player::getUniqueId).toArray(UUID[]::new);
+				messagingService.<BatchPlayerProfilePacket>writeAndAwaitResponse(new BatchPlayerProfilePacket(uuids)).thenAccept(response -> {
+					int len = players.size();
+					val iterator = players.iterator();
+					val profiles = response.getGameProfiles();
+					for (int i = 0; i < len; i++) {
+						val p = iterator.next();
+						if (!p.isOnline()) continue;
+						val profile = profiles[i];
+						if (profile == null) continue;
+						try {
+							skinManager.setGameProfile(p, skinManager.newSkinRestorerProfile(skinManager.getGameProfile(p), profile));
+						} catch (Exception ex) {
+							getLogger().log(Level.WARNING, "Error recovering game profile for " + p.getUniqueId() + '/' + p.getName(), ex);
+						}
+					}
+				});
+			}
+		}
 	}
 
 	@Override
@@ -152,7 +190,14 @@ public final class BukkitPlugin extends JavaPlugin {
 		val skinManager = this.skinManager;
 		val key = newProfileKey();
 		for (val p : server.getOnlinePlayers()) {
-			skinManager.writeChangedGameProfile(p.getPersistentDataContainer(), key, skinManager.getGameProfile(p));
+			val profile = skinManager.getGameProfile(p);
+			if (profile instanceof SpoofedGameProfile) {
+				// We must change profiles back in order to prevent class leaking
+				// Please, never use /reload
+				val spoofed = (SpoofedGameProfile) profile;
+				skinManager.writeGameProfileToDataContainer(p.getPersistentDataContainer(), key, spoofed.getSpoofed());
+				skinManager.setGameProfile(p, spoofed.getOriginal());
+			}
 		}
 		val dumpPath = this.dumpPath;
 		val cache = this.profileCache;

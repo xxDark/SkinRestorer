@@ -48,7 +48,7 @@ final class BukkitSkinRestorer implements SkinRestorer {
 			previous = ((SpoofedGameProfile) previous).getOriginal();
 		}
 		profile = skinManager.fixGameProfile(player, p.getName(), profile);
-		skinManager.setGameProfile(p, new SkinRestorerGameProfile(previous, profile));
+		skinManager.setGameProfile(p, skinManager.newSkinRestorerProfile(previous, profile));
 		this.messagingService.write(new PlayerProfileUpdatedPacket(player, profile));
 	}
 
