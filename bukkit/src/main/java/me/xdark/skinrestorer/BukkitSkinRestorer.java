@@ -32,12 +32,7 @@ final class BukkitSkinRestorer implements SkinRestorer {
 		if (p == null) {
 			throw new UnsupportedOperationException("Not implemented yet.");
 		}
-		GameProfile profile;
-		try {
-			profile = ServerInternals.getProfile(ServerInternals.getHandlePlayer(p));
-		} catch (Throwable ex) {
-			throw new RuntimeException(ex);
-		}
+		GameProfile profile = this.skinManager.getGameProfile(p);
 		if (profile instanceof SpoofedGameProfile) {
 			return CompletableFuture.completedFuture(((SpoofedGameProfile) profile).getOriginal());
 		}
