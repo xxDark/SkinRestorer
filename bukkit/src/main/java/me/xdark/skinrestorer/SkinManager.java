@@ -6,6 +6,7 @@ import io.netty.buffer.UnpooledByteBufAllocator;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.val;
+import me.xdark.skinrestorer.util.ServerInternals;
 import me.xdark.skinrestorer.util.UtilData;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
