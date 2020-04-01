@@ -3,7 +3,6 @@ package me.xdark.skinrestorer;
 import com.mojang.authlib.GameProfile;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.val;
 import me.xdark.skinrestorer.messaging.MessagingService;
 import me.xdark.skinrestorer.net.packets.PlayerProfilePacket;
@@ -40,7 +39,6 @@ final class BukkitSkinRestorer implements SkinRestorer {
 	}
 
 	@Override
-	@SneakyThrows
 	public void setProfile(@NotNull UUID player, @NotNull GameProfile profile) {
 		val server = this.server;
 		val p = server.getPlayer(player);
@@ -55,7 +53,6 @@ final class BukkitSkinRestorer implements SkinRestorer {
 	}
 
 	@Override
-	@SneakyThrows
 	public boolean resetProfile(@NotNull UUID player) {
 		val server = this.server;
 		val p = server.getPlayer(player);
